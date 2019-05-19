@@ -1,3 +1,12 @@
+const client = contentful.createClient({
+  // This is the space ID. A space is like a project folder in Contentful terms
+  space: "26m1wb6ftuvf",
+  // This is the access token for this space. Normally you get both ID and the token in the Contentful web app
+  accessToken: "8aooBUqER-Jg9Vj4BEQhGyS5tw6uIhmihDBRcYANZd8"
+});
+
+console.log(client);
+
 // variables
 
 const cartBtn = document.querySelector(".cart-btn");
@@ -19,9 +28,8 @@ let buttonsDOM = [];
 class Products {
   async getProducts() {
     try {
-      let result = await fetch("products.json");
-      let data = await result.json();
-      let products = data.items;
+      let contentful = await client.getEntries();
+      let products = contentful.items;
       products = products.map(item => {
         const { title, price } = item.fields;
         const { id } = item.sys;
@@ -125,9 +133,13 @@ class UI {
                 <span class="remove-item" data-id=${item.id}>remove</span>
             </div>
             <div>
-              <i class="fas fa-chevron-up" data-id=${item.id}></i>
+              <i class="fas fa-chevron-up increase-amount" data-id=${
+                item.id
+              }></i>
               <p class="item-amount">${item.amount}</p>
-              <i class="fas fa-chevron-down" data-id=${item.id}></i>
+              <i class="fas fa-chevron-down decrease-amount" data-id=${
+                item.id
+              }></i>
             </div>
             `;
     cartContent.appendChild(div);
@@ -141,6 +153,68 @@ class UI {
   hideCart() {
     cartOverlay.classList.remove("transparentBcg");
     cartDOM.classList.remove("showCart");
+  }
+
+  setCartInteractions() {
+    // Clear cart button
+    clearCartBtn.addEventListener("click", () => {
+      this.clearCart();
+    });
+
+    cartContent.addEventListener("click", event => {
+      let target = event.target;
+      let id = target.dataset.id;
+      if (event.target.classList.contains("remove-item")) {
+        cartContent.removeChild(target.parentElement.parentElement);
+        this.removeItem(id);
+      } else if (target.classList.contains("increase-amount")) {
+        // Increment amount
+        cart.map(item => {
+          if (item.id === id) {
+            item.amount++;
+            target.nextElementSibling.innerText = item.amount;
+          }
+        });
+        // Save storage
+        Storage.saveCart(cart);
+        // Set cart
+        this.setCartValues(cart);
+      } else if (target.classList.contains("decrease-amount")) {
+        // Decrease amount
+        cart.map(item => {
+          if (item.id === id && item.amount > 1) {
+            item.amount--;
+            target.previousElementSibling.innerText = item.amount;
+          }
+        });
+        // Save storage
+        Storage.saveCart(cart);
+        // Set cart
+        this.setCartValues(cart);
+      }
+    });
+  }
+
+  clearCart() {
+    let cartItems = cart.map(item => item.id);
+    cartItems.forEach(id => this.removeItem(id));
+    while (cartContent.firstChild) {
+      cartContent.removeChild(cartContent.firstChild);
+    }
+    this.hideCart();
+  }
+
+  removeItem(id) {
+    cart = cart.filter(item => item.id !== id);
+    this.setCartValues(cart);
+    Storage.saveCart(cart);
+    let button = this.getSingleButton(id);
+    button.disabled = false;
+    button.innerHTML = `<i class="fas fa-shopping-cart"></i>add to cart`;
+  }
+
+  getSingleButton(id) {
+    return buttonsDOM.find(button => button.dataset.id === id);
   }
 }
 
@@ -178,5 +252,6 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then(() => {
       ui.getBagButtons();
+      ui.setCartInteractions();
     });
 });
