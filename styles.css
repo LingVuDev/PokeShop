@@ -76,7 +76,7 @@ body {
   margin-bottom: 3rem;
 }
 .banner-btn {
-  padding: 1rem 3rem;
+  padding: 1rem 2rem;
   text-transform: uppercase;
   letter-spacing: var(--mainSpacing);
   font-size: 1rem;
@@ -256,6 +256,13 @@ body {
 .cart-footer h3 {
   text-transform: capitalize;
   margin-bottom: 1rem;
+}
+
+.cart-actions {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  grid-column-gap: 1.5rem;
 }
 
 /* --------------- End of Cart ---------------- */
